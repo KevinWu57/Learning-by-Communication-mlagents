@@ -115,8 +115,8 @@ class ConsoleWriter(StatsWriter):
             if self.self_play and "Self-play/ELO" in values:
                 elo_stats = values["Self-play/ELO"]
                 logger.info("{} ELO: {:0.3f}. ".format(category, elo_stats.mean))
-            if "Success Rate/Average SMS" in values:
-                sms_summary = values["Environment/Cumulative Reward"]
+            if "Success Rate/Success Rate weighted by Min Steps" in values:
+                sms_summary = values["Success Rate/Success Rate weighted by Min Steps"]
                 logger.info("SMS:{}".format(sms_summary.mean))
         else:
             logger.info(
@@ -192,7 +192,7 @@ class TensorboardWriter(StatsWriter):
             os.makedirs(filewriter_dir, exist_ok=True)
             if self._clear_past_data:
                 self._delete_all_events_files(filewriter_dir)
-            self.summary_writers[category] = tf.summary.FileWriter(filewriter_dir)
+            self.summary_writers[category] = tf.summary.FileWriter(filewriter_dir, graph=tf.get_default_graph())
 
     def _delete_all_events_files(self, directory_name: str) -> None:
         for file_name in os.listdir(directory_name):
