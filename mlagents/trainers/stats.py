@@ -98,26 +98,29 @@ class ConsoleWriter(StatsWriter):
 
         if "Environment/Cumulative Reward" in values:
             stats_summary = values["Environment/Cumulative Reward"]
+            sms_summary = values["Metrics/Success Rate Weighted by Min Steps"]
+            dts_summary = values["Metrics/Distance to Success"]
             logger.info(
                 "{}: Step: {}. "
                 "Time Elapsed: {:0.3f} s "
                 "Mean "
-                "Reward: {:0.3f}"
-                ". Std of Reward: {:0.3f}. {}".format(
+                "Reward: {:0.3f} "
+                "Std of Reward: {:0.3f} "
+                "SMS:{:.5f} "
+                "DTS: {:.3f} --{}".format(
                     category,
                     step,
                     time.time() - self.training_start_time,
                     stats_summary.mean,
                     stats_summary.std,
+                    sms_summary.mean,
+                    dts_summary.mean,
                     is_training,
                 )
             )
             if self.self_play and "Self-play/ELO" in values:
                 elo_stats = values["Self-play/ELO"]
                 logger.info("{} ELO: {:0.3f}. ".format(category, elo_stats.mean))
-            if "Success Rate/Success Rate weighted by Min Steps" in values:
-                sms_summary = values["Success Rate/Success Rate weighted by Min Steps"]
-                logger.info("SMS:{}".format(sms_summary.mean))
         else:
             logger.info(
                 "{}: Step: {}. No episode was completed since last summary. {}".format(
