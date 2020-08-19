@@ -316,56 +316,42 @@ class ModelUtils:
         :param reuse: Whether to re-use the weights within the same scope.
         :return: List of hidden layer tensors.
         """
-        with tf.variable_scope(scope):
-            conv1 = tf.layers.conv2d(
-                image_input,
-                16,
-                kernel_size=[8, 8],
-                strides=[4, 4],
-                activation=tf.nn.elu,
-                reuse=reuse,
-                name="conv_1",
-            )
-            conv2 = tf.layers.conv2d(
-                conv1,
-                32,
-                kernel_size=[4, 4],
-                strides=[2, 2],
-                activation=tf.nn.elu,
-                reuse=reuse,
-                name="conv_2",
-            )
-            hidden = tf.layers.flatten(conv2)
 
-        # # Start from a pretrained model
-        # checkpoint_path = "F:/ML-Agents/python-envs/mlagents-env/Lib/site-packages/mlagents/trainers/checkpoints/target_images_training.ckpt"
+        # For depth image, don't use pretrianed CNN model
+        if(image_input.shape[3]==1):
+            with tf.variable_scope(scope):
+                conv1 = tf.layers.conv2d(
+                    image_input,
+                    16,
+                    kernel_size=[8, 8],
+                    strides=[4, 4],
+                    activation=tf.nn.elu,
+                    reuse=reuse,
+                    name="conv_1",
+                )
+                conv2 = tf.layers.conv2d(
+                    conv1,
+                    32,
+                    kernel_size=[4, 4],
+                    strides=[2, 2],
+                    activation=tf.nn.elu,
+                    reuse=reuse,
+                    name="conv_2",
+                )
+                hidden = tf.layers.flatten(conv2)
+        else:
+            # Start from a pretrained model
+            pretrained_model_path = "pretrained_cnn_h5/simple_cnn.h5"
 
-        # model = Sequential([
-        #     Conv2D(16, 8, strides=4, activation=tf.nn.elu, input_shape=(180,180,3)),
-        #     MaxPooling2D(),
-        #     Conv2D(32, 4, strides=2, activation=tf.nn.elu),
-        #     MaxPooling2D(),
-        #     Conv2D(64, 3, strides=1, activation=tf.nn.elu),
-        #     MaxPooling2D(),
-        #     Flatten(),
-        #     Dense(512, activation='relu'),
-        #     Dense(4)
-        # ])
+            model = tf.keras.models.load_model(pretrained_model_path)
+            # Remove the output layers
+            model.pop()
 
-        # model.load_weights(checkpoint_path)
-        # model.pop()
-        # model.pop()
-        # model.pop()
-
-        # # Dense layeroutput
-        # with tf.variable_scope(scope):
-        #     conv1 = model.get_layer(index=0)(image_input)
-        #     maxp1 = model.get_layer(index=1)(conv1)
-        #     conv2 = model.get_layer(index=2)(maxp1)
-        #     maxp2 = model.get_layer(index=3)(conv2)
-        #     conv3 = model.get_layer(index=4)(maxp2)
-        #     maxp3 = model.get_layer(index=5)(conv3)
-        #     hidden = tf.layers.flatten(maxp3)
+            # Output a dense layer
+            with tf.variable_scope(scope):
+                conv1 = model.get_layer(index=0)(image_input)
+                conv2 = model.get_layer(index=1)(conv1)
+                hidden = tf.layers.flatten(conv2)
 
 
         with tf.variable_scope(scope + "/" + "flat_encoding"):
@@ -425,28 +411,20 @@ class ModelUtils:
                 )
                 hidden = tf.layers.flatten(conv3)
         else:
-            # Start from a pretrained model
-            checkpoint_path = "F:/PretrainCNN/checkpoints/image_cnn_pretrain.ckpt"
+             # Start from a pretrained model
+            pretrained_model_path = "pretrained_cnn_h5/nature_cnn.h5"
 
-            model = Sequential([
-                Conv2D(32, 8, strides=4, activation=tf.nn.elu, input_shape=(150, 150 ,3)),
-                Conv2D(64, 4, strides=2, activation=tf.nn.elu),
-                Conv2D(64, 3, strides=1, activation=tf.nn.elu),
-                Flatten(),
-                Dense(512, activation='relu'),
-                Dense(5)
-            ])
-
-            model.load_weights(checkpoint_path)
-            model.pop()
+            model = tf.keras.models.load_model(pretrained_model_path)
+            # Remove the output layers
             model.pop()
 
-            # Dense layeroutput
+            # Output a dense layer
             with tf.variable_scope(scope):
                 conv1 = model.get_layer(index=0)(image_input)
                 conv2 = model.get_layer(index=1)(conv1)
                 conv3 = model.get_layer(index=2)(conv2)
-                hidden = model.get_layer(index=3)(conv3)
+                hidden = tf.layers.flatten(conv3)
+
 
         with tf.variable_scope(scope + "/" + "flat_encoding"):
             hidden_flat = ModelUtils.create_vector_observation_encoder(
